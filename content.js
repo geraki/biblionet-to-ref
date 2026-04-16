@@ -1,60 +1,107 @@
-// Συνάρτηση για αφαίρεση τόνων και μετατροπή σε πεζά
+// Αφαίρεση τόνων και μετατροπή σε πεζά για ασφαλή σύγκριση
 const normalize = (str) => 
-    str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s/g, ' ');
 
-const getValue = (li) => {
-    const strong = li.querySelector('strong');
-    return strong ? strong.innerText.trim() : '';
-};
-
-// Διαχωρισμός ονόματος σε first και last
+// Διαχωρισμός ονόματος: Πρώτη λέξη = first, υπόλοιπες = last
 const splitName = (fullName) => {
     if (!fullName) return { first: '', last: '' };
-    const parts = fullName.split(/\s+/).filter(p => p.length > 0);
+    const parts = fullName.trim().split(/\s+/).filter(p => p.length > 0);
     if (parts.length === 1) return { first: '', last: parts[0] };
-    // Το πρώτο μέρος ως first, τα υπόλοιπα ως last
     return { first: parts[0], last: parts.slice(1).join(' ') };
 };
 
+// Εξαγωγή ονομάτων από links <a> μέσα σε ένα li
+const getNamesFromLi = (li) => {
+    const links = Array.from(li.querySelectorAll('a'));
+    if (links.length > 0) {
+        return links.map(a => a.innerText.trim()).filter(t => t.length > 0);
+    }
+    // Fallback αν δεν έχει links αλλά έχει strong
+    const strong = li.querySelector('strong');
+    return strong ? [strong.innerText.trim()] : [];
+};
+
 function scrapeBookInfo() {
-    const data = {};
-    data.title = document.querySelector('h1')?.innerText.trim();
+    const data = {
+        authors: [],
+        editors: [],
+        translators: [],
+        title: document.querySelector('h1')?.innerText.trim(),
+        publisher: '',
+        dateRaw: '',
+        location: '',
+        isbn: '',
+        series: ''
+    };
     
-    // Σάρωση όλων των li για εύρεση πεδίων
-    const allLis = Array.from(document.querySelectorAll('li'));
-    
-    allLis.forEach(li => {
+    // 1. Σάρωση Συντελεστών (Συγγραφείς, Επιμελητές, κλπ)
+    const contributorLis = Array.from(document.querySelectorAll('.contributors-list li'));
+    contributorLis.forEach(li => {
         const normText = normalize(li.innerText);
-        
-        if (normText.includes('συγγραφεας:')) data.authorRaw = getValue(li);
-        if (normText.includes('μεταφραση:')) data.translator = getValue(li);
-        if (normText.includes('εκδοτης:')) data.publisher = getValue(li);
-        if (normText.includes('ημ. εκδοσης:')) data.dateRaw = getValue(li);
-        if (normText.includes('περιοχη:')) data.location = getValue(li);
-        if (normText.includes('isbn:')) data.isbn = getValue(li);
+        if (normText.includes('συγγραφεας')) {
+            data.authors = getNamesFromLi(li);
+        } else if (normText.includes('επιμελεια')) {
+            data.editors = getNamesFromLi(li);
+        } else if (normText.includes('μεταφραση')) {
+            data.translators = getNamesFromLi(li);
+        }
     });
 
-    // Επεξεργασία
-    const { first, last } = splitName(data.authorRaw);
-    const year = data.dateRaw ? data.dateRaw.split('/').pop() : '';
-    const accessDate = new Date().toISOString().split('T')[0];
+    // 2. Σάρωση Χαρακτηριστικών (Εκδότης, ISBN, Σειρά κλπ)
+    const attrLis = Array.from(document.querySelectorAll('.book_attr_list li'));
+    attrLis.forEach(li => {
+        const normText = normalize(li.innerText);
+        const strong = li.querySelector('strong');
+        const val = strong ? strong.innerText.trim() : '';
 
-    // Δημιουργία παραμέτρων
+        if (normText.includes('εκδοτης')) data.publisher = val;
+        if (normText.includes('ημ. εκδοσης')) data.dateRaw = val;
+        if (normText.includes('περιοχη')) data.location = val;
+        if (normText.includes('isbn')) data.isbn = val;
+        if (normText.includes('σειρα')) data.series = val;
+    });
+
+    // --- Κατασκευή Template ---
     let parts = [];
-    if (last) parts.push(`last=${last}`);
-    if (first) parts.push(`first=${first}`);
+
+    // Συγγραφείς: last1, first1, last2...
+    data.authors.forEach((name, i) => {
+        const { first, last } = splitName(name);
+        parts.push(`last${i+1}=${last}`);
+        parts.push(`first${i+1}=${first}`);
+    });
+
     if (data.title) parts.push(`title=${data.title}`);
-    if (data.translator) parts.push(`translator=${data.translator}`);
+
+    // Επιμελητές: Wikipedia standard (editor-last, editor-first)
+    data.editors.forEach((name, i) => {
+        const { first, last } = splitName(name);
+        const suffix = i === 0 ? '' : i + 1;
+        parts.push(`editor-last${suffix}=${last}`);
+        parts.push(`editor-first${suffix}=${first}`);
+    });
+
+    // Μεταφραστές
+    if (data.translators.length > 0) {
+        parts.push(`translator=${data.translators.join(', ')}`);
+    }
+
     if (data.publisher) parts.push(`publisher=${data.publisher}`);
     if (data.location) parts.push(`location=${data.location}`);
+    if (data.series) parts.push(`series=${data.series}`);
+    
+    const year = data.dateRaw ? data.dateRaw.split('/').pop() : '';
     if (year) parts.push(`year=${year}`);
     if (data.isbn) parts.push(`isbn=${data.isbn}`);
     
+    // URL και Access Date
     const cleanUrl = window.location.href.split('?')[0];
+    const accessDate = new Date().toISOString().split('T')[0];
+    
     parts.push(`url=${cleanUrl}`);
     parts.push(`access-date=${accessDate}`);
 
-    return `<ref>{{cite book |${parts.join(' | ')}}}</ref>`;
+    return `<ref>{{cite book | ${parts.join(' | ')} }}</ref>`;
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
