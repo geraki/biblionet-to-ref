@@ -96,10 +96,10 @@ function scrapeBookInfo() {
 
     // URL και Access Date
     // const cleanUrl = window.location.href.split('?')[0];
-    const accessDate = new Date().toISOString().split('T')[0];
+    //const accessDate = new Date().toISOString().split('T')[0];
 
     // parts.push(`url=${cleanUrl}`);   Δεν χρειάζομαστε το url αφού δεν οδηγεί στο πραγματικό περιεχόμενο.
-    parts.push(`access-date=${accessDate}`);
+    // parts.push(`access-date=${accessDate}`); // Δεν χρειάζεται αφού δεν έχουμε url
 
     return `<ref>{{cite book | ${parts.join(' | ')} }}</ref>`;
 }

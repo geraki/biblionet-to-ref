@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Biblionet to WikiCite",
-  "version": "1.1",
+  "version": "1.2",
   "browser_specific_settings": {
     "gecko": {
       "id": "biblionet-wikicite@wikipedia-el"
@@ -19,16 +19,5 @@
   ],
   "action": {
     "default_popup": "popup.html"
-  },
-  "content_scripts": [
-    {
-      "matches": [
-        "*://biblionet.gr/*",
-        "*://www.biblionet.gr/*"
-      ],
-      "js": [
-        "content.js"
-      ]
-    }
-  ]
+  }
 }
