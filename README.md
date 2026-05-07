@@ -15,5 +15,7 @@
 
 ## Αρχεία
 - `manifest.json`: Το αρχείο διαμόρφωσης (manifest v3) του Chrome extension.
-- `content.js`: Το script που «τρέχει» στο παρασκήνιο (όταν ανοίγετε σελίδες στο biblionet.gr) για να διαβάσει τα δεδομένα του βιβλίου από το HTML δομημένο περιεχόμενο.
+- `content.js`: Το script που τρέχει όταν ανοίγετε σελίδες στο biblionet.gr για να ξεκινήσει το υπόλοιπο script εμφανίσει τα δεδομένα του βιβλίου από το HTML δομημένο περιεχόμενο.
 - `popup.html` & `popup.js`: Το αναδυόμενο παράθυρο (διεπαφή χρήστη) και ο κώδικάς του για την αλληλεπίδραση με το `content.js` και την άμεση αντιγραφή στο clipboard.
+
+Book icon designed by Dmitry Baranovskiy from The Noun Project
