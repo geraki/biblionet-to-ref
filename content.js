@@ -1,5 +1,5 @@
 // Αφαίρεση τόνων και μετατροπή σε πεζά για ασφαλή σύγκριση
-const normalize = (str) => 
+const normalize = (str) =>
     str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s/g, ' ');
 
 // Διαχωρισμός ονόματος: Πρώτη λέξη = first, υπόλοιπες = last
@@ -33,7 +33,7 @@ function scrapeBookInfo() {
         isbn: '',
         series: ''
     };
-    
+
     // 1. Σάρωση Συντελεστών (Συγγραφείς, Επιμελητές, κλπ)
     const contributorLis = Array.from(document.querySelectorAll('.contributors-list li'));
     contributorLis.forEach(li => {
@@ -67,8 +67,8 @@ function scrapeBookInfo() {
     // Συγγραφείς: last1, first1, last2...
     data.authors.forEach((name, i) => {
         const { first, last } = splitName(name);
-        parts.push(`last${i+1}=${last}`);
-        parts.push(`first${i+1}=${first}`);
+        parts.push(`last${i + 1}=${last}`);
+        parts.push(`first${i + 1}=${first}`);
     });
 
     if (data.title) parts.push(`title=${data.title}`);
@@ -89,16 +89,16 @@ function scrapeBookInfo() {
     if (data.publisher) parts.push(`publisher=${data.publisher}`);
     if (data.location) parts.push(`location=${data.location}`);
     if (data.series) parts.push(`series=${data.series}`);
-    
+
     const year = data.dateRaw ? data.dateRaw.split('/').pop() : '';
     if (year) parts.push(`year=${year}`);
     if (data.isbn) parts.push(`isbn=${data.isbn}`);
-    
+
     // URL και Access Date
-    const cleanUrl = window.location.href.split('?')[0];
+    // const cleanUrl = window.location.href.split('?')[0];
     const accessDate = new Date().toISOString().split('T')[0];
-    
-    parts.push(`url=${cleanUrl}`);
+
+    // parts.push(`url=${cleanUrl}`);   Δεν χρειάζομαστε το url αφού δεν οδηγεί στο πραγματικό περιεχόμενο.
     parts.push(`access-date=${accessDate}`);
 
     return `<ref>{{cite book | ${parts.join(' | ')} }}</ref>`;
