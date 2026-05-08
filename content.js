@@ -63,10 +63,13 @@ function scrapeBookInfo() {
 
     // --- Κατασκευή Template ---
     let parts = [];
+    let authorLastName = '';
+    let editorLastName = '';
 
     // Συγγραφείς: last1, first1, last2...
     data.authors.forEach((name, i) => {
         const { first, last } = splitName(name);
+        if (i === 0) authorLastName = last;
         parts.push(`last${i + 1}=${last}`);
         parts.push(`first${i + 1}=${first}`);
     });
@@ -76,6 +79,7 @@ function scrapeBookInfo() {
     // Επιμελητές: Wikipedia standard (editor-last, editor-first)
     data.editors.forEach((name, i) => {
         const { first, last } = splitName(name);
+        if (i === 0) editorLastName = last;
         const suffix = i === 0 ? '' : i + 1;
         parts.push(`editor-last${suffix}=${last}`);
         parts.push(`editor-first${suffix}=${first}`);
@@ -94,14 +98,11 @@ function scrapeBookInfo() {
     if (year) parts.push(`year=${year}`);
     if (data.isbn) parts.push(`isbn=${data.isbn}`);
 
-    // URL και Access Date
-    // const cleanUrl = window.location.href.split('?')[0];
-    //const accessDate = new Date().toISOString().split('T')[0];
+    const finalLastName = editorLastName || authorLastName;
+    const refName = (finalLastName && year) ? `${finalLastName}_${year}` : (finalLastName || year || 'biblionet');
 
-    // parts.push(`url=${cleanUrl}`);   Δεν χρειάζομαστε το url αφού δεν οδηγεί στο πραγματικό περιεχόμενο.
-    // parts.push(`access-date=${accessDate}`); // Δεν χρειάζεται αφού δεν έχουμε url
-
-    return `<ref>{{cite book | ${parts.join(' | ')} }}</ref>`;
+    // ΑΛΛΑΓΗ: Προστέθηκε το name="${refName}" στο ref tag
+    return `<ref name="${refName}">{{cite book | ${parts.join(' | ')} }}</ref>`;
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
