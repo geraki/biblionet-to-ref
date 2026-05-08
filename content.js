@@ -2,12 +2,12 @@
 const normalize = (str) =>
     str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s/g, ' ');
 
-// Διαχωρισμός ονόματος: Πρώτη λέξη = first, υπόλοιπες = last
+// Διαχωρισμός ονόματος: Τελευταία λέξη = last, όλες οι προηγούμενες = first
 const splitName = (fullName) => {
     if (!fullName) return { first: '', last: '' };
     const parts = fullName.trim().split(/\s+/).filter(p => p.length > 0);
     if (parts.length === 1) return { first: '', last: parts[0] };
-    return { first: parts[0], last: parts.slice(1).join(' ') };
+    return { first: parts.slice(0, -1).join(' '), last: parts[parts.length - 1] };
 };
 
 // Εξαγωγή ονομάτων από links <a> μέσα σε ένα li
